@@ -4,8 +4,14 @@ on:
   push:
     tags:
       - 'v*'
+      - 'beta*'
+      - 'beta'
   workflow_dispatch:
     inputs:
+      tag_name:
+        description: 'Release Tag Name (e.g., beta, v1.0.0)'
+        required: false
+        type: string
       create_release:
         description: 'Create a GitHub Release?'
         type: boolean
@@ -125,7 +131,7 @@ jobs:
     name: Create GitHub Release
     needs: build-backend
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.create_release == 'true'
+    if: startsWith(github.ref, 'refs/tags/') || github.event.inputs.create_release == 'true'
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -140,9 +146,10 @@ jobs:
       - name: Generate Release Notes & Publish
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
           files: |
             NEXTonebotfilter-*.zip
             NEXTonebotfilter-*.tar.gz
           draft: false
-          prerelease: false
+          prerelease: ${{ contains(github.event.inputs.tag_name || github.ref_name, 'beta') }}
           generate_release_notes: true
