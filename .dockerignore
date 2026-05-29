@@ -1,0 +1,10 @@
+.git
+.gitignore
+data/
+*.exe
+*.log
+console/node_modules
+console/.next
+console/out
+backend/nextonebotfilter
+backend/nextonebotfilter.exe

@@ -1,0 +1,148 @@
+name: Release and Cross-Platform Packaging
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create a GitHub Release?'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  # Job 1: Build modern console (Next.js) statically
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: console/package-lock.json
+
+      - name: Install Dependencies
+        run: |
+          cd console
+          npm ci --no-audit --no-fund
+
+      - name: Build Next.js Static Export
+        run: |
+          cd console
+          npm run build:export
+
+      - name: Upload Frontend Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-assets
+          path: console/out/
+          retention-days: 1
+
+  # Job 2: Build Go binaries for multiple platforms concurrently using Matrix
+  build-backend:
+    name: Build Go Binary (${{ matrix.goos }}/${{ matrix.goarch }})
+    needs: build-frontend
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
+          - goos: windows
+            goarch: arm64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Frontend Assets
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-assets
+          path: backend/internal/server/web/
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache: true
+          cache-dependency-path: backend/go.sum
+
+      - name: Build Go Application
+        env:
+          CGO_ENABLED: 0
+          GOOS: ${{ matrix.matrix.goos || matrix.goos }}
+          GOARCH: ${{ matrix.matrix.goarch || matrix.goarch }}
+        run: |
+          cd backend
+          OUT_NAME="nextonebotfilter"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            OUT_NAME="nextonebotfilter.exe"
+          fi
+          go build -trimpath -ldflags="-s -w" -o "${OUT_NAME}" ./cmd/nextonebotfilter
+
+      - name: Archive and Package Artifacts
+        run: |
+          cd backend
+          OUT_NAME="nextonebotfilter"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            OUT_NAME="nextonebotfilter.exe"
+            cp ../README.md .
+            zip -q -r "../NEXTonebotfilter-${{ matrix.goos }}-${{ matrix.goarch }}.zip" "${OUT_NAME}" README.md
+          else
+            cp ../README.md .
+            tar -czf "../NEXTonebotfilter-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz" "${OUT_NAME}" README.md
+          fi
+
+      - name: Upload Packaged Release Asset
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-asset-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            NEXTonebotfilter-*.zip
+            NEXTonebotfilter-*.tar.gz
+          retention-days: 7
+
+  # Job 3: Aggregate and Create GitHub Release
+  create-release:
+    name: Create GitHub Release
+    needs: build-backend
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.create_release == 'true'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Packaged Release Assets
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-asset-*
+          merge-multiple: true
+          path: .
+
+      - name: Generate Release Notes & Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            NEXTonebotfilter-*.zip
+            NEXTonebotfilter-*.tar.gz
+          draft: false
+          prerelease: false
+          generate_release_notes: true

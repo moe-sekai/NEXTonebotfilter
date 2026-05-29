@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+  html, body {
+    background: #f7f6f2;
+    color: #1c1b16;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: #d97757;
+    color: #fff;
+  }
+}
+
+@layer components {
+  .surface {
+    @apply bg-white border border-ink-100 rounded-2xl shadow-soft;
+  }
+  .surface-muted {
+    @apply bg-ink-50 border border-ink-100 rounded-2xl;
+  }
+  .btn {
+    @apply inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium transition-colors;
+  }
+  .btn-primary {
+    @apply btn bg-ink-900 text-ink-50 hover:bg-ink-700;
+  }
+  .btn-clay {
+    @apply btn bg-clay-500 text-white hover:bg-clay-600;
+  }
+  .btn-ghost {
+    @apply btn text-ink-600 hover:bg-ink-100;
+  }
+  .btn-outline {
+    @apply btn border border-ink-200 text-ink-700 hover:bg-ink-50;
+  }
+  .input {
+    @apply w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm placeholder:text-ink-300 focus:border-ink-500 focus:outline-none focus:ring-2 focus:ring-ink-200;
+  }
+  .label {
+    @apply text-xs uppercase tracking-wider text-ink-400 font-medium;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full border border-ink-200 bg-ink-50 px-2.5 py-0.5 text-xs text-ink-600;
+  }
+  .chip-active {
+    @apply chip border-clay-500 bg-clay-500/10 text-clay-600;
+  }
+}

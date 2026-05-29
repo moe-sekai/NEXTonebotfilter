@@ -1,0 +1,22 @@
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.exe
+*.log
+node_modules/
+.next/
+out/
+.DS_Store
+.env
+.env.*
+!.env.example
+console/.next
+console/out
+
+# embedded console assets are produced by build.sh / build.cmd
+backend/internal/server/web/*
+!backend/internal/server/web/index.html
+backend/nextonebotfilter
+backend/nextonebotfilter.exe

@@ -1,0 +1,21 @@
+services:
+  nextonebotfilter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nextonebotfilter:latest
+    container_name: nextonebotfilter
+    restart: unless-stopped
+    ports:
+      - "8787:8787"   # console UI + REST/SSE API
+      - "3939:3939"   # OneBot reverse-WS gateway (default; matches gateway.port)
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8787/api/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
