@@ -2,7 +2,7 @@
 
 独立运行的 OneBot v11 反向 WebSocket 过滤网关,以及一个基于 Next.js + Claude.ai 风格的现代控制台。
 
-源自 [OneBotFilter](https://github.com/ProtoDeath2333/OneBotFilter) 思路,但代码基线来自 Moebot-NEXT-Go 内置的 filter 模块——已加入消息去重、模板系统、运行时事件流、YAML 进出口等增强。
+源自 [OneBotFilter](https://github.com/xuanmingLQ/OneBotFilter) 思路,但代码基线来自 Moebot-NEXT-Go 内置的 filter 模块——已加入消息去重、模板系统、运行时事件流、YAML 进出口等增强。
 
 ```
 NEXTonebotfilter/
