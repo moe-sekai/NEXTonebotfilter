@@ -84,6 +84,16 @@ export type FilterEvent = {
 
 const base = "/api";
 
+// stripReadonly removes server-managed timestamp fields before sending a write
+// request. The backend models use time.Time for created_at/updated_at, and Go's
+// JSON decoder rejects empty-string values (e.g. on新建 forms), returning 400.
+function stripReadonly<T extends object>(obj: T): Partial<T> {
+  const copy = { ...obj } as Record<string, unknown>;
+  delete copy.created_at;
+  delete copy.updated_at;
+  return copy as Partial<T>;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${base}${path}`, {
     headers: { "Content-Type": "application/json" },
@@ -106,20 +116,20 @@ export const api = {
 
   getGateway: () => request<FilterGateway>("/gateway"),
   saveGateway: (gw: FilterGateway) =>
-    request<FilterGateway>("/gateway", { method: "PUT", body: JSON.stringify(gw) }),
+    request<FilterGateway>("/gateway", { method: "PUT", body: JSON.stringify(stripReadonly(gw)) }),
 
   listApps: () => request<FilterApp[]>("/apps"),
   createApp: (a: Partial<FilterApp>) =>
-    request<FilterApp>("/apps", { method: "POST", body: JSON.stringify(a) }),
+    request<FilterApp>("/apps", { method: "POST", body: JSON.stringify(stripReadonly(a)) }),
   updateApp: (id: number, a: Partial<FilterApp>) =>
-    request<FilterApp>(`/apps/${id}`, { method: "PUT", body: JSON.stringify(a) }),
+    request<FilterApp>(`/apps/${id}`, { method: "PUT", body: JSON.stringify(stripReadonly(a)) }),
   deleteApp: (id: number) => request<{ ok: boolean }>(`/apps/${id}`, { method: "DELETE" }),
 
   listTemplates: () => request<FilterTemplate[]>("/templates"),
   createTemplate: (t: Partial<FilterTemplate>) =>
-    request<FilterTemplate>("/templates", { method: "POST", body: JSON.stringify(t) }),
+    request<FilterTemplate>("/templates", { method: "POST", body: JSON.stringify(stripReadonly(t)) }),
   updateTemplate: (id: number, t: Partial<FilterTemplate>) =>
-    request<FilterTemplate>(`/templates/${id}`, { method: "PUT", body: JSON.stringify(t) }),
+    request<FilterTemplate>(`/templates/${id}`, { method: "PUT", body: JSON.stringify(stripReadonly(t)) }),
   deleteTemplate: (id: number) =>
     request<{ ok: boolean }>(`/templates/${id}`, { method: "DELETE" }),
 
